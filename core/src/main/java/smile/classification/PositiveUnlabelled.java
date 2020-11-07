@@ -99,7 +99,13 @@ public class PositiveUnlabelled<T> implements SoftClassifier<Tuple>, DataFrameCl
         BaseVector bv = formula.y(data);
 
         ClassLabels codec = ClassLabels.fit(bv);
+        if (codec.labels.min != -1) {
+            throw new IllegalArgumentException("There is no unlabelled data in the training set");
+        }
         int k = codec.k - 1;
+        if (k == 0) {
+            throw new IllegalArgumentException(String.format("Only %d positive classes", k));
+        }
         int n = x.nrows();
         int[] y = codec.y;
 
