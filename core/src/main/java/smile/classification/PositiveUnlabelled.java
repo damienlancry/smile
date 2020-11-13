@@ -153,11 +153,18 @@ public class PositiveUnlabelled<T> implements SoftClassifier<Tuple>, DataFrameCl
 
     @Override
     public int predict(Tuple x, double[] posteriori) {
+        int y = 0;
+        double maxp = 0.0;
         for (int i = 0; i < k; i++) {
             double[] proba = new double[2];
             ((SoftClassifier<Tuple>) classifiers[i]).predict(x, proba);
-            posteriori[i] = proba[1];
+            double p = proba[1];
+            posteriori[i] = p;
+            if (p > maxp && p > 0.5) {
+                y = i + 1;
+                maxp = p;
+            }
         }
-        return labels.valueOf(MathEx.whichMax(posteriori));
+        return labels.valueOf(y);
     }
 }
