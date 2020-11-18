@@ -1,10 +1,10 @@
 name := "smile"
 
 lazy val commonSettings = Seq(
-  organization := "com.github.haifengl",
+  organization := "io.dathena",
   organizationName := "Haifeng Li",
   organizationHomepage := Some(url("http://haifengl.github.io/")),
-  version := "2.5.3",
+  version := "2.5.4",
   javacOptions in (Compile, compile) ++= Seq("-source", "1.8", "-target", "1.8", "-encoding", "UTF8", "-g:lines,vars,source", "-Xlint:unchecked"),
   javacOptions in (Compile, doc) ++= Seq("-Xdoclint:none"),
   libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.30" % "test",
@@ -16,14 +16,11 @@ lazy val commonSettings = Seq(
   parallelExecution in Test := false,
   crossPaths := false,
   autoScalaLibrary := false,
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
-  },
-  publishArtifact in Test := false,
+  isSnapshot := true,
+  updateOptions := updateOptions.value.withGigahorse(false),
+  publishTo := Some("Dathena Nexus" at "http://repository.dathena.io/repository/dathena/"),
+  publishArtifact in Test := true,
+  credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
   publishMavenStyle := true,
   pomIncludeRepository := { _ => false },
   pomExtra := (

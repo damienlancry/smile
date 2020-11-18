@@ -18,10 +18,11 @@
 package smile
 
 import java.util.stream.LongStream
+
 import smile.base.cart.SplitRule
 import smile.base.mlp.LayerBuilder
 import smile.base.rbf.RBF
-import smile.data.DataFrame
+import smile.data.{DataFrame, Tuple}
 import smile.data.formula.Formula
 import smile.math.MathEx
 import smile.math.TimeFunction
@@ -979,6 +980,26 @@ package object classification {
     */
   def ovr[T <: AnyRef](x: Array[T], y: Array[Int])(trainer: (Array[T], Array[Int]) => Classifier[T]): OneVersusRest[T] = time("One vs. Rest") {
     OneVersusRest.fit(x, y, trainer)
+  }
+
+  /**
+   * Positive Unlabelled learner for reducing the problem of
+   * multi positive unlabelled learning to multiple binary classification problems.
+   * It involves training a single classifier per positive class, with the samples
+   * of that class as positive samples and all other samples
+   * (examples of other positive classes, and unlabelled points) as negatives.
+   * This strategy requires the base classifiers to produce a real-valued
+   * confidence score for its decision, rather than just a class label;
+   * discrete class labels alone can lead to ambiguities, where multiple
+   * classes are predicted for a single sample.
+   * <p>
+   * At prediction time, all classifiers are applied to an unseen sample
+   * x and the predicted label k is the one corresponding to the highest
+   * confidence score if it is greater than a threshold e.g. 0.5 or the
+   * negative class otherwise.
+   */
+  def pu(formula: Formula, data: DataFrame)(trainer: (Formula, DataFrame) => SoftClassifier[Tuple]): PositiveUnlabelled[Tuple] = time("Positive Unlabelled") {
+    PositiveUnlabelled.fit(formula, data, trainer)
   }
 
   /** Hacking scaladoc [[https://github.com/scala/bug/issues/8124 issue-8124]].

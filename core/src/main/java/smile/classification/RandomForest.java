@@ -295,8 +295,6 @@ public class RandomForest implements SoftClassifier<Tuple>, DataFrameClassifier,
         final int k = codec.k;
         final int n = x.nrows();
 
-        final int[] weight = classWeight != null ? classWeight : Collections.nCopies(k, 1).stream().mapToInt(i -> i).toArray();
-
         final int[][] order = CART.order(x);
         final int[][] prediction = new int[n][k]; // out-of-bag prediction
 
@@ -311,6 +309,7 @@ public class RandomForest implements SoftClassifier<Tuple>, DataFrameClassifier,
         for (int i = 0; i < n; i++) {
             count[codec.y[i]]++;
         }
+        final int[] weight = classWeight != null ? classWeight : MathEx.divide(count, MathEx.min(count));
         // samples in each class
         int[][] yi = new int[k][];
         for (int i = 0; i < k; i++) {
@@ -508,13 +507,9 @@ public class RandomForest implements SoftClassifier<Tuple>, DataFrameClassifier,
 
         Tuple xt = formula.x(x);
 
-        double[] prob = new double[k];
         Arrays.fill(posteriori, 0.0);
         for (Tree tree : trees) {
-            tree.tree.predict(xt, prob);
-            for (int i = 0; i < k; i++) {
-                posteriori[i] += tree.weight * prob[i];
-            }
+            posteriori[tree.tree.predict(xt)]++;
         }
 
         MathEx.unitize1(posteriori);
