@@ -141,6 +141,10 @@ public class PositiveUnlabelled<T> implements SoftClassifier<Tuple>, DataFrameCl
         return this.k;
     }
 
+    public int[] labels() {
+        return this.labels.values;
+    }
+
     @Override
     public Formula formula() {
         return ((DataFrameClassifier) classifiers[0]).formula();
