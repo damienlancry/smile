@@ -22,7 +22,6 @@ import smile.data.Tuple;
 import smile.data.formula.Formula;
 import smile.data.type.StructType;
 import smile.data.vector.BaseVector;
-import smile.math.MathEx;
 import smile.util.IntSet;
 
 import java.util.function.BiFunction;
@@ -50,6 +49,8 @@ public class PositiveUnlabelled<T> implements SoftClassifier<Tuple>, DataFrameCl
 
     /** The number of positive classes. */
     private int k;
+    /** Whether or not the classifier was trained on unlabelled data. 1 if yes else 0. */
+    private int l;
     /** The binary classifiers of each positive class. */
     private Classifier<T>[] classifiers;
     /** The class label encoder. */
@@ -70,8 +71,9 @@ public class PositiveUnlabelled<T> implements SoftClassifier<Tuple>, DataFrameCl
      */
     public PositiveUnlabelled(Classifier<T>[] classifiers, IntSet labels) {
         this.classifiers = classifiers;
-        this. k = classifiers.length;
+        this.k = classifiers.length;
         this.labels = labels;
+        this.l = labels.min == -1? 1:0;
     }
 
     /**
@@ -99,21 +101,19 @@ public class PositiveUnlabelled<T> implements SoftClassifier<Tuple>, DataFrameCl
         BaseVector bv = formula.y(data);
 
         ClassLabels codec = ClassLabels.fit(bv);
-        if (codec.labels.min != -1) {
-            throw new IllegalArgumentException("There is no unlabelled data in the training set");
-        }
-        int k = codec.k - 1;
-        if (k == 0) {
-            throw new IllegalArgumentException(String.format("Only %d positive classes", k));
-        }
+
         int n = x.nrows();
         int[] y = codec.y;
+
+        boolean hasSeenUnlabelled = codec.labels.min == -1;
+        int k = hasSeenUnlabelled? codec.k - 1 : codec.k;
+        int l = hasSeenUnlabelled? 1 : 0;
 
         SoftClassifier[] classifiers = new SoftClassifier[k];
         for (int i = 0; i < k; i++) {
             int[][] yi = new int[n][1];
             for (int j = 0; j < n; j++) {
-                yi[j][0] = y[j] == i + 1 ? pos : neg;
+                yi[j][0] = y[j] == i + l ? pos : neg; // if there are unlabelled documents, i + 1 else i
             }
 
             classifiers[i] = trainer.apply(formula, x.merge(DataFrame.of(yi, bv.name())));
@@ -130,7 +130,7 @@ public class PositiveUnlabelled<T> implements SoftClassifier<Tuple>, DataFrameCl
             ((SoftClassifier<Tuple>) classifiers[i]).predict(x, proba);
             double p = proba[1];
             if (p > maxp && p > 0.5) {
-                y = i + 1;
+                y = i + l;
                 maxp = p;
             }
         }
@@ -139,6 +139,10 @@ public class PositiveUnlabelled<T> implements SoftClassifier<Tuple>, DataFrameCl
 
     public int k() {
         return this.k;
+    }
+
+    public int[] labels() {
+        return this.labels.values;
     }
 
     @Override
@@ -161,7 +165,7 @@ public class PositiveUnlabelled<T> implements SoftClassifier<Tuple>, DataFrameCl
             double p = proba[1];
             posteriori[i] = p;
             if (p > maxp && p > 0.5) {
-                y = i + 1;
+                y = i + l;
                 maxp = p;
             }
         }

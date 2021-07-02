@@ -3689,6 +3689,17 @@ public class MathEx {
     }
 
     /**
+     * Divide each element of an array by a constant x = a * x.
+     */
+    public static double[] divide(int[] x, double a) {
+        double[] y = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            y[i] = x[i] / a;
+        }
+        return y;
+    }
+
+    /**
      * Scale each element of an array by a constant x = a * x.
      */
     public static void scale(double a, double[] x) {
